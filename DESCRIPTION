@@ -1,0 +1,9 @@
+Package: dynfactoR
+Title: Dynamic factor model estimation for nowcasting
+Version: 0.1
+Authors@R: person("Rytis", "Bagdziunas", , "rytis.bagdziunas@uclouvain.be", role = c("aut", "cre"))
+Description: This package implements a subset of state space modelling, namely models with dynamic factors. These models are commonly used in economics for short-term forecasting due to possibility to summarize information from large datasets in a small number of factors.
+Depends: R (>= 3.1.3), MASS, optimx
+License: MIT + file LICENSE
+LazyData: true
+Suggests: xts, testthat

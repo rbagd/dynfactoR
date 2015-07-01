@@ -1,0 +1,106 @@
+%\VignetteIndexEntry{Modelling with dynfactoR}
+
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage[utf8]{inputenc}
+
+\parindent 0.0in
+\parskip 0.07in
+
+\DeclareMathOperator{\id}{I}
+
+\author{Rytis Bagd\v{z}i\={u}nas \\ \small{CORE, Universit\'{e} catholique de Louvain}}
+\title{Modelling with \texttt{dynfactoR}}
+
+%%% Reduce section header size
+\makeatletter
+\renewcommand\section{\@startsection{section}{1}{\z@}%
+                           {-3.5ex \@plus -1ex \@minus -.2ex}%
+                           {2.3ex \@plus.2ex}%
+                           {\normalfont\large\bfseries}}
+\makeatother
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\maketitle
+
+\texttt{dynfactoR} package is aimed at researchers dealing with economic modelling. In particular, it is useful at extracting underlying trends from a potentially large number of economic time series.
+
+Dynamic factor model is a special case of a state space equation. In its general form it can be written as 
+
+\begin{equation} \label{eq:statespace}
+\begin{array}{ll}
+  \mathbf{X}_{t} = \mathbf{C}\mathbf{f}_{t} + \boldsymbol{\varepsilon}_{t}, & \boldsymbol{\varepsilon}_{t} \sim \mathcal{N} \left(\mathbf{0}, \mathbf{R} \right) \\
+  \mathbf{f}_{t} = \mathbf{A}\mathbf{f}_{t-1} + \mathbf{u}_{t}, & u_{t} \sim \mathcal{N} \left(\mathbf{0}, \mathbf{Q} \right)
+\end{array}
+\end{equation}
+
+where $\mathbf{X}_{t}$ is a vector of observable data which might contain missing data. It is assumed that observable data is linearly driven by a low-dimensional unobservable process $\mathbf{f}_{t}$.
+
+\subsubsection*{Use case}
+
+A typical use case for such a model is nowcasting gross domestic product (GDP). GDP data is published every $3$ months, so that economic growth from January to March would only be known in early April. However, many business and consumer surveys are published monthly and are often correlated with GDP growth. Therefore, predictions of economic growth for first quarter should be different depending on whether they are done in December or in February (hence the term \textit{nowcasting}). Dynamic factor model is one way to do that by extracting an underlying trend which often follows economic growth pattern. Besides, if restrictions are imposed on $\mathbf{C}$, economic growth can be modelled explicitly by factors.
+
+\section{State space equations}
+
+It is assumed that $\mathbf{A}(L)\mathbf{f}_{t} = \mathbf{u}_{t}$ where $\mathbf{u}_{t} \sim N \left( \mathbf{0}, \id_{r} \right)$ and $\mathbf{A}(L)$ is a lag polynomial with roots inside the unit circle, that is $\mathbf{f}_{t}$ is a covariance-stationary process.
+
+Let $\mathbf{f}_{t}$ follow a $p$-th order autoregressive process, so that
+\begin{equation}\label{eq:factorvar}
+  \mathbf{f}_{t} = \mathbf{A}_{1}\mathbf{f}_{t-1} + \cdots + \mathbf{A}_{p}\mathbf{f}_{t-p} + \mathbf{u}_{t}
+\end{equation}
+Suppose that there are $r$-factors, that is $\mathbf{f}_{t}$ and $\mathbf{u}_{t}$ are $r$-variate processes. If $\mathbf{f}_{t}$ were observed, it would be easy to estimate $\left\lbrace \mathbf{A}_{1}, \dots, \mathbf{A}_{p} \right\rbrace$ with a simple OLS procedure in the context of VAR($p$) model. This estimator would also be a maximum likelihood estimator.
+
+Let $\mathbf{f}_{t} = \left(f_{1,t}, \dots, f_{r,t}\right)$ and $\mathbf{u}_{t} = \left(u_{1,t}, \dots, u_{r,t}\right)$. Then \eqref{eq:factorvar} can be rewritten in state space equation form of \eqref{eq:statespace} as
+\begin{equation}
+  \begin{pmatrix} f_{1,t} \\ f_{2,t} \\ \cdots \\ f_{r, t} \\ f_{1,t-1} \\ \dots \\ f_{r,t-p+1} \end{pmatrix}
+  = \begin{bmatrix} \mathbf{A}_{1} & \cdots & \cdots & \mathbf{A}_{p} \\ \id_{r} & 0 & 0 \\ \dots & \dots & \dots & \dots\\ \dots & 0 & \id_{r} & 0 \end{bmatrix}
+  \begin{pmatrix} f_{1,t-1} \\ f_{2,t-1} \\ \dots \\ f_{r,t-1} \\ f_{1,t-2} \\ \dots \\ f_{r,t-p} \end{pmatrix}
+  + \begin{pmatrix} u_{1,t} \\ \cdots \\ u_{r,t} \\ 0 \\ \dots \\ 0 \end{pmatrix}
+\end{equation}
+Evidently, state space covariance matrix has to be extended by zeroes. With this in mind, measurement equation then becomes
+\begin{equation}
+  \mathbf{X}_{t} = \begin{bmatrix} \mathbf{C} & \mathbf{0}_{n \times r} & \dots & \mathbf{0}_{n \times r} \end{bmatrix} 
+  \begin{pmatrix} f_{1,t} \\ f_{2,t} \\ \cdots \\ f_{r, t} \\ f_{1,t-1} \\ \dots \\ f_{r,t-p+1} \end{pmatrix} + \boldsymbol{\varepsilon}_{t}
+\end{equation}
+where $\mathbf{0}_{n \times r}$ is zero-matrix with $n$ rows and $r$ columns.
+
+\section{Estimators}
+
+\begin{itemize}
+
+    \item PCA estimator where factors are estimated as principal components of observable data. Its properties are well discussed in Stock \& Watson (2002). If missing data is present, other estimators should be used.
+    \item Two-step estimator by Doz, Gianone and Reichlin (2011). This methods uses PCA estimates and runs them through Kalman filter.
+    \item QML estimator by Doz, Gianone and Reichlin (2012). Similar to two-step estimator, however Kalman filtering procedure is iterated until EM convergence.
+
+\end{itemize}
+
+\section{Forecasting}
+
+Once a dynamic factor model is estimated, $\left(\mathbf{X}_{1:T}, \hat{\mathbf{A}}, \hat{\mathbf{C}}\right)$ are available. Predicting $\left(\mathbf{X}_{f, T+h}, \mathbf{f}_{T+h}\right)$ for some horizon $h \in \left\lbrace1, \dots \right\rbrace$ consists in three steps:
+\begin{enumerate}
+  \item predict $\mathbf{f}_{f, T+1}$ given estimate of $\mathbf{f}_{T}$ and VAR($p$) process, i.e.
+    \begin{equation*}
+      \mathbf{f}_{f,T+1} = \hat{\mathbf{A}}_{1}\mathbf{f}_{T} + \dots + \hat{\mathbf{A}}_{p}\mathbf{f}_{T-p}
+    \end{equation*}
+  \item predict $\mathbf{X}_{f,T+1}$ based on factor loading and factor estimates, i.e.
+    \begin{equation*}
+      \mathbf{X}_{f,T+1} = \hat{\mathbf{C}} \mathbf{f}_{f,T+1}
+    \end{equation*}
+  \item repeat steps 1 and 2 until desired horizon level is reached
+\end{enumerate}
+
+\section{Future and ongoing work}
+
+Some of the ideas for dynamic factor modelling are not yet implemented completely or even at all. This section gathers future ideas for the package.
+
+\begin{enumerate}
+  \item Introduce Markov-switching possibility so that, for example, $\mathbf{C}$ or $\mathbf{A}$ could be state dependent. It would be in particular interesting if this could capture business cycle growth variations. In case of this model, approximation to Kalman filter can be used, e.g. Kim filter, in order to avoid exponentially growing number of calculations.
+  \item Analyze and propose some defaults for restrictions on $\mathbf{C}$. Typically, this includes identification constraints and currently, only upper triangular $\mathbf{C}$ is implemented. Constraints can also be specified based on economic reasoning and render model hierarchical.
+  \item Kalman and Kim filters are slow in \texttt{R} due to their recursive nature. They should be reimplemented in \texttt{C} or call another package such as \texttt{FKF}. Kim filter will probably need to be rewritten in \texttt{C} anyway.
+  \item As presented, dynamic factor model is only dynamic in the state equation. It can be generalized to have dynamics in the measurement equation as well, i.e. $\mathbf{X}_{t}$ depending on current and past values of $\mathbf{f}_{t}$. This should not be difficult to implement as such model would be eventually reduced to \eqref{eq:statespace}.
+  \item Currently, there is no automated testing for the package. This should be fixed.
+\end{enumerate}
+
+\end{document}
