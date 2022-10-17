@@ -1,3 +1,8 @@
+
+This repository is deprecated in favor of [dfms](https://github.com/SebKrantz/dfms), a vastly improved version of whatever you can find here.
+
+---
+
 This is a public repository for `dynfactoR`, a package for `R` which facilitates estimation of dynamic factor models.
 
 Current implementation of main `dfm` function supports vector auto-regressive type dynamics for factors, missing observations and some statistical identification restrictions. A dynamic factor model estimation will typically return 3 estimates, namely principal component estimator, a two-step estimator as well as quasi-maximum likelihood (QML) estimator. The two latter estimators are based on Kalman filtering and QML estimator is a particular case of EM-algorithm.
